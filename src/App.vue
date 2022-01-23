@@ -1,113 +1,151 @@
 <script setup>
-import { ref, computed } from 'vue'
-const letters =  [
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
-    'g',
-    'h',
-    'i',
-    'j',
-    'k',
-    'l',
-    'm',
-    'n',
-    'o',
-    'p',
-    'q',
-    'r',
-    's',
-    't',
-    'u',
-    'v',
-    'w',
-    'x',
-    'y',
-    'z'
-  ];
-  const selectedLetters =ref([]);
+import { ref, computed } from "vue";
+import getAnagrams from "./js/anagram.js";
+const letters = [
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "g",
+  "h",
+  "i",
+  "j",
+  "k",
+  "l",
+  "m",
+  "n",
+  "o",
+  "p",
+  "q",
+  "r",
+  "s",
+  "t",
+  "u",
+  "v",
+  "w",
+  "x",
+  "y",
+  "z",
+];
+const selectedLetters = ref([]);
 
-  function toggleLetter(letter) {
-    // check if letter in letters array
-    if (selectedLetters.value.includes(letter)) {
-      //remove letter from selectedLetters.value array
-      selectedLetters.value.splice(selectedLetters.value.indexOf(letter), 1);
-    } else {
-      //add letter to selectedLetters.value array
-      selectedLetters.value.push(letter);
-    }
+function removeLetter(letter) {
+  selectedLetters.value.splice(selectedLetters.value.indexOf(letter), 1);
+}
+function addLetter(letter) {
+  //add letter to selectedLetters.value array
+  selectedLetters.value.push(letter);
+}
+const selectedFont = ref("");
+const modifier = ref("");
 
-  }
-
-
-    const modifier = ref("");
-
-    const solutions = computed(() => {
-      const permutations = [];
-      const permutation = [];
-      const permute = (letters, permutation) => {
-        if (permutation.length === letters.length) {
-          permutations.push(permutation.slice().join(""));
-        } else {
-          for (let i = 0; i < letters.length; i++) {
-            if (permutation.includes(letters[i])) {
-              continue;
-            }
-            permutation.push(letters[i]);
-            permute(letters, permutation);
-            permutation.pop();
-          }
-        }
-      };
-      permute(selectedLetters.value, permutation);
-      return permutations;
-
-      })
+const solutions = computed(() => {
+  const permutations = getAnagrams(selectedLetters.value);
+  return permutations;
+});
 </script>
 
 <template>
-  Add up to 6 letters, any more and you'll probably crash your browser ;)
   <div class="grid">
     <div
-      v-for="letter in letters"
+      v-for="(letter, i) in letters"
       v-bind:class="{ active: selectedLetters.includes(letter) }"
-      @click="toggleLetter(letter)"
-      :key="letter"
+      :key="`${letter}${i}`"
     >
-      {{letter}}
+      <button
+        @click="removeLetter(letter)"
+        :disbaled="selectedLetters.includes(letter)"
+      >
+        -
+      </button>
+      <span>{{ letter }}</span>
+      <button @click="addLetter(letter)" :disabled="selectedLetters.length > 6">
+        +
+      </button>
     </div>
   </div>
-  selected: {{selectedLetters}}
-  <hr />
 
-  {{solutions.length}} variations<br />
-  <input v-model="modifier" placeholder="modifier ('er', 'est',' one', etc)" />
-  <div class="grid">
-    <div class="tag" v-for="tag in solutions" :key="tag">{{tag}}{{modifier}}</div>
-  </div>
+  <hr />
+  <template v-if="selectedLetters.length">
+    {{ solutions.length }} variations<br />
+    <input
+      v-model="modifier"
+      placeholder="modifier ('er', 'est',' one', etc)"
+    />
+    <select v-model="selectedFont">
+      <option value="">Default</option>
+      <option value="tag">Tag</option>
+      <option value="throw">Throw</option>
+    </select>
+    <div class="grid">
+      <div class="preview" v-for="tag in solutions" :key="tag">
+        <span :class="selectedFont">{{ tag }}{{ modifier }}</span>
+      </div>
+    </div>
+  </template>
 </template>
 
 <style lang="scss">
+@font-face {
+  font-family: "Throw-up Font";
+  src: url("./assets/fonts/Throw-up-Font.eot");
+  src: url("./assets/fonts/Throw-up-Font.eot?#iefix")
+      format("embedded-opentype"),
+    url("./assets/fonts/Throw-up-Font.woff2") format("woff2"),
+    url("./assets/fonts/Throw-up-Font.woff") format("woff"),
+    url("./assets/fonts/Throw-up-Font.ttf") format("truetype"),
+    url("./assets/fonts/Throw-up-Font.svg#Throw-up Font") format("svg");
+}
+@font-face {
+  font-family: "aAnotherTag";
+  src: url("./assets/fonts/aAnotherTag.eot");
+  src: url("./assets/fonts/aAnotherTag.eot?#iefix") format("embedded-opentype"),
+    url("./assets/fonts/aAnotherTag.woff2") format("woff2"),
+    url("./assets/fonts/aAnotherTag.woff") format("woff"),
+    url("./assets/fonts/aAnotherTag.ttf") format("truetype"),
+    url("./assets/fonts/aAnotherTag.svg#aAnotherTag") format("svg");
+}
+
+button {
+  border: 1px solid black;
+  background: none;
+  color: black;
+}
 .grid {
   display: grid;
-  //grid min max auto 
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  grid-gap: 1px;
-  padding: 1rem;
+  //grid min max auto
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-gap: 0.5rem;
+  padding: 1rem 0;
   > div {
     border: 1px solid black;
-    padding: 0.5em;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    * {
+      flex: 1;
+    }
     &.active {
       background-color: #ccc;
     }
   }
 }
-.tag {
-  padding: 0.5em;
+
+.preview {
+  padding: 2rem;
   border-radius: 0.25em;
   border: 1px solid black;
+  text-transform: capitalize;
+  font-size: 2rem;
+  .tag {
+    font-family: "aAnotherTag";
+    font-size: 2em;
+  }
+  .throw {
+    font-family: "Throw-up Font";
+    font-size: 2em;
+  }
 }
 </style>
